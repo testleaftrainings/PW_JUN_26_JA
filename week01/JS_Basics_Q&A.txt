@@ -1,0 +1,362 @@
+================================================================================
+           JAVASCRIPT INTERVIEW QUESTIONS & ANSWERS (SDET LEVEL)
+================================================================================
+
+1. String Immutability
+--------------------------------------------------------------------------------
+
+Q: "In JavaScript, strings are described as immutable. Can you explain what that 
+   means in practical terms? When we talk about 'modifying' a string, what 
+   actually happens behind the scenes?"
+
+A: 
+   • Strings are immutable → cannot be changed after creation
+   • Any modification creates a NEW string in a new memory location
+   • The variable reference is updated to point to the new value
+   • Original string remains unchanged
+
+   Example:
+   let str = "test";        // memory A
+   str = str + "leaf";      // memory B (new string created)
+   console.log(str); // testleaf
+
+
+2. Extract ID from String
+--------------------------------------------------------------------------------
+
+Q: "Suppose you have a dynamic string like this:
+   'Order ID: #12345-Confirmed'
+   Extract only the numeric ID."
+
+A:
+   • Use split() to break string using delimiters
+   • Extract value between # and -
+
+   Example:
+   let text = "Order ID: #12345-Confirmed";
+   let id = text.split("#")[1].split("-")[0];
+   console.log(id); // 12345
+
+
+3. Handling Falsy Value (0 Bug)
+--------------------------------------------------------------------------------
+
+Q: "Consider this validation function:
+   function isValid(data) {
+       if (data) { return true; }
+   }
+   The intention is to check whether a field has a value. However, there's a bug: 
+   the number 0 is being treated as invalid (falsy), but 0 is actually a valid 
+   input for a quantity field. How would you rewrite this validation logic?"
+
+A:
+   • if(data) fails because 0 is falsy
+   • Use explicit checks for null, undefined, and empty string
+
+   Example:
+   function isValid(data) {
+     return data !== null && data !== undefined && data !== "";
+   }
+   console.log(isValid(0)); // true
+
+
+4. Modifying String Characters
+--------------------------------------------------------------------------------
+
+Q: "I have the following code:
+   let str = 'Hello World';
+   str[0] = 'J';
+   What will happen when I try to change the first character this way?
+   Also, since strings are immutable, how does JavaScript actually handle 
+   string storage in memory? And what is the correct way to achieve a change 
+   like replacing 'H' with 'J'?"
+
+A:
+   • Strings are immutable → direct index assignment does NOT work
+   • JavaScript ignores the change silently
+   • Must create a new string
+
+   Example:
+   let str = "Hello World";
+   str = "J" + str.slice(1);
+   console.log(str); // Jello World
+
+
+5. Parsing Server Logs
+--------------------------------------------------------------------------------
+
+Q: "You're given a continuous string of server logs:
+   ERROR: 404 [Time: 12:00] | INFO: Login Success [Time: 12:01] | ERROR: 500 [Time: 12:05]
+   Your task is to extract an array containing only the timestamps (like 12:00 
+   and 12:05) for log entries that contain 'ERROR'."
+
+A:
+   • Split logs using |
+   • Filter entries containing "ERROR"
+   • Extract time using string methods
+
+   Example:
+   let logs = "ERROR: 404 [Time: 12:00] | INFO: Login Success [Time: 12:01] | ERROR: 500 [Time: 12:05]";
+   
+   let result = logs
+     .split("|")
+     .filter(log => log.includes("ERROR"))
+     .map(log => log.split("[Time: ")[1].replace("]", "").trim());
+   
+   console.log(result); // ["12:00", "12:05"]
+
+
+6. Longest Word in Sentence
+--------------------------------------------------------------------------------
+
+Q: "Take this sentence:
+   'Automation testing is incredibly important'
+   Write a loop — or use any approach you prefer — to find and return the 
+   longest word in the sentence."
+
+A:
+   • Split sentence into words
+   • Loop and compare lengths
+   • Track longest word
+
+   Example:
+   let sentence = "Automation testing is incredibly important";
+   
+   let words = sentence.split(" ");
+   let longest = "";
+   
+   for (let word of words) {
+     if (word.length > longest.length) {
+       longest = word;
+     }
+   }
+   
+   console.log(longest); // incredibly
+
+
+7. replaceAll() in Test Automation
+--------------------------------------------------------------------------------
+
+Q: "In the context of test automation, can you give me an example or scenario 
+   where using replaceAll() would be the right choice? What problem does it 
+   solve that replace() might not handle properly?"
+
+A:
+   • Used for data cleanup and normalization
+   • Replaces all occurrences in a string
+   • Useful for:
+     - Removing symbols
+     - Cleaning API/UI data
+     - Preparing data for assertions
+
+   Example:
+   let price = "$1,000.50";
+   let clean = price.replaceAll(/[^0-9.]/g, "");
+   console.log(clean); // 1000.50
+
+
+8. Remove Duplicates from String
+--------------------------------------------------------------------------------
+
+Q: "Suppose you have a string with duplicate characters, like 'aabbcdeeff'.
+   How would you write logic to remove the duplicates and return a string with 
+   only unique characters, preserving the original order?"
+
+A:
+   • Use Set (removes duplicates, preserves order)
+   • Convert back to string
+
+   Example:
+   let str = "aabbcdeeff";
+   let result = [...new Set(str)].join("");
+   console.log(result); // abcdef
+
+
+================================================================================
+                              FINAL SUMMARY
+================================================================================
+
+   • Strings → Immutable → new memory created
+   • split() → data extraction
+   • filter() → selection
+   • map() → transformation
+   • replaceAll() → cleanup
+   • Set → remove duplicates
+
+================================================================================
+                  Advanced Follow-up (Panel Level)
+================================================================================
+
+1. String Immutability
+--------------------------------------------------------------------------------
+Q: What does it mean that strings are immutable?
+
+A: 
+   • Strings cannot be modified after creation
+   • Any operation creates a NEW string in memory
+   • Variable reference changes, original remains same
+   • Improves predictability and avoids side effects
+
+
+2. Practical Scenario – Modification
+--------------------------------------------------------------------------------
+Q: If strings are immutable, how does replace() work?
+
+A:
+   • Does NOT modify original string
+   • Returns a NEW modified string
+   • Needs reassignment
+
+   Example:
+   str = str.replace("a", "b");
+
+
+3. Data Extraction
+--------------------------------------------------------------------------------
+Q: How will you extract dynamic data from a string?
+
+A:
+   • Use split(), substring(), slice()
+   • Based on delimiters or positions
+   • Prefer split for structured strings
+
+   Example:
+   text.split("#")[1].split("-")[0];
+
+
+4. Falsy Value Bug
+--------------------------------------------------------------------------------
+Q: Why is if(data) risky in validation?
+
+A:
+   • Treats 0, "", null, undefined as false
+   • May reject valid inputs like 0
+   • Use explicit checks
+
+   Example:
+   data !== null && data !== undefined
+
+
+5. String Index Update
+--------------------------------------------------------------------------------
+Q: Why does str[0] = 'J' not work?
+
+A:
+   • Strings are immutable
+   • Index access is read-only
+   • Must reconstruct string
+
+
+6. Log Parsing (Real-time Scenario)
+--------------------------------------------------------------------------------
+Q: How do you extract only ERROR timestamps from logs?
+
+A:
+   • Split logs into array
+   • Filter ERROR entries
+   • Extract time using split or regex
+
+   Pipeline: split → filter → map
+
+
+7. map() vs filter()
+--------------------------------------------------------------------------------
+Q: Difference between map and filter?
+
+A:
+   • map → transforms all elements (same size)
+   • filter → selects subset (reduced size)
+   • Both return new arrays
+
+
+8. includes()
+--------------------------------------------------------------------------------
+Q: Where do you use includes()?
+
+A:
+   • To check existence
+   • Used in filtering conditions
+   • Returns boolean
+
+
+9. Longest Word Logic
+--------------------------------------------------------------------------------
+Q: How do you find the longest word in a sentence?
+
+A:
+   • Split into words
+   • Loop through
+   • Compare lengths
+   • Track maximum
+
+
+10. replaceAll() in Automation
+--------------------------------------------------------------------------------
+Q: Why is replaceAll important in test automation?
+
+A:
+   • Data cleanup (UI and API)
+   • Remove symbols, normalize values
+   • Useful for assertions
+   • Avoids multiple replace calls
+
+
+11. Data Sanitization
+--------------------------------------------------------------------------------
+Q: How will you compare UI price with expected value?
+
+A:
+   • Remove symbols ($, ,)
+   • Convert to numeric or string
+   • Compare normalized values
+
+
+12. Remove Duplicates
+--------------------------------------------------------------------------------
+Q: Best way to remove duplicates from string?
+
+A:
+   • Use Set
+   • Convert → Set → back to string
+
+   Example:
+   [...new Set(str)].join("")
+
+
+13. Performance Question
+--------------------------------------------------------------------------------
+Q: Which is better: loop or Set for duplicates?
+
+A:
+   • Set → cleaner, optimized
+   • Loop → flexible for custom logic
+   • Both O(n), Set preferred
+
+
+14. Real-time Automation Scenario
+--------------------------------------------------------------------------------
+Q: You get inconsistent API response formats. How will you handle?
+
+A:
+   • Normalize data using:
+     - replaceAll()
+     - trim()
+     - split()
+   • Create utility methods
+   • Validate after standardization
+
+
+================================================================================
+                              PRO TIPS FOR INTERVIEW
+================================================================================
+   • Always give examples with code snippets
+   • Relate answers to automation scenarios
+   • Mention edge cases (null, undefined, empty)
+   • Show practical testing mindset
+
+================================================================================
+                         GOOD LUCK WITH YOUR SDET INTERVIEW!
+================================================================================
+================================================================================
+                         END OF DOCUMENT
+================================================================================
