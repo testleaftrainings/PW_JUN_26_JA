@@ -1,0 +1,452 @@
+================================================================================
+           PLAYWRIGHT INTERVIEW QUESTIONS & ANSWERS (SENIOR SDET)
+================================================================================
+-----------------------------------------------------------------------------------
+For Playwright interviews, focus especially on:
+forEach(), map(), filter(), find(), some(), every(), reduce(), sort(), and splice(). 
+These are the ones most commonly used in framework development and API response 
+handling.
+
+Below are the most commonly used Array Helper Functions we discussed and that are 
+frequently used in JavaScript and Playwright automation.
+
+push() – Add element at end
+==============================
+let arr = [1, 2];
+arr.push(3);
+
+console.log(arr);
+
+Output 
+[1, 2, 3]
+
+pop() – Remove element from end
+================================
+let arr = [1, 2, 3];
+arr.pop();
+
+console.log(arr);
+
+Output
+[1, 2]
+
+
+unshift() – Add element at beginning
+======================================
+let arr = [2, 3];
+arr.unshift(1);
+
+console.log(arr);
+
+Output
+
+[1, 2, 3]
+
+shift() – Remove element from beginning
+========================================
+let arr = [1, 2, 3];
+arr.shift();
+
+console.log(arr);
+
+Output
+
+[2, 3]
+
+splice() – Add/Remove elements
+================================
+let arr = [10, 20, 30, 40];
+
+arr.splice(2, 1);
+
+console.log(arr);
+
+Output
+
+[10, 20, 40]
+
+slice() – Extract portion of array
+========================================
+let arr = [10, 20, 30, 40];
+
+console.log(arr.slice(1, 3));
+
+Output
+
+[20, 30]
+
+indexOf() – Find index of value
+========================================
+let arr = ["Chrome", "Edge", "Firefox"];
+
+console.log(arr.indexOf("Edge"));
+
+Output
+
+1
+
+includes() – Check value exists
+========================================
+let arr = ["Chrome", "Edge", "Firefox"];
+
+console.log(arr.includes("Chrome"));
+
+Output
+
+true
+
+sort() – Sort array
+========================================
+let arr = [100, 2, 30];
+
+arr.sort((a, b) => a - b);
+
+console.log(arr);
+
+Output
+
+[2, 30, 100]
+
+reverse() – Reverse array
+========================================
+let arr = [1, 2, 3];
+
+console.log(arr.reverse());
+
+Output
+
+[3, 2, 1]
+
+forEach() – Iterate array
+========================================
+let arr = ["Chrome", "Edge"];
+
+arr.forEach(browser => {
+    console.log(browser);
+});
+
+Output
+
+Chrome
+Edge
+
+map() – Transform each element
+========================================
+let arr = [1, 2, 3];
+
+let result = arr.map(num => num * 2);
+
+console.log(result);
+
+Output
+
+[2, 4, 6]
+
+filter() – Filter elements
+===========================
+let arr = [10, 20, 30, 40];
+
+let result = arr.filter(num => num > 20);
+
+console.log(result);
+
+Output
+
+[30, 40]
+
+find() – Return first matching element
+========================================
+let arr = [10, 20, 30, 40];
+
+let result = arr.find(num => num > 20);
+
+console.log(result);
+
+Output
+
+30
+
+findIndex() – Return index of first match
+========================================
+let arr = [10, 20, 30, 40];
+
+let result = arr.findIndex(num => num > 20);
+
+console.log(result);
+
+Output
+
+2
+
+some() – At least one match
+===========================
+let arr = [10, 20, 30];
+
+console.log(arr.some(num => num > 25));
+
+Output
+
+true
+
+every() – All elements match
+==============================
+let arr = [10, 20, 30];
+
+console.log(arr.every(num => num > 5));
+
+Output
+
+true
+
+reduce() – Accumulate values
+=============================
+let arr = [10, 20, 30];
+
+let total = arr.reduce((sum, num) => sum + num, 0);
+
+console.log(total);
+
+Output
+
+60
+
+join() – Convert array to string
+==================================
+let arr = ["Chrome", "Edge", "Firefox"];
+
+console.log(arr.join(", "));
+
+Output
+
+Chrome, Edge, Firefox
+
+concat() – Merge arrays
+=======================
+let arr1 = [1, 2];
+let arr2 = [3, 4];
+
+console.log(arr1.concat(arr2));
+
+Output
+
+[1, 2, 3, 4]
+
+Quick Interview Revision
+=========================
+
+push()       -> Add at end
+pop()        -> Remove from end
+unshift()    -> Add at start
+shift()      -> Remove from start
+splice()     -> Add/Remove elements
+slice()      -> Extract portion
+indexOf()    -> Find index
+includes()   -> Check existence
+sort()       -> Sort array
+reverse()    -> Reverse array
+forEach()    -> Iterate
+map()        -> Transform data
+filter()     -> Filter data
+find()       -> First matching element
+findIndex()  -> First matching index
+some()       -> At least one match
+every()      -> All match
+reduce()     -> Accumulate values
+join()       -> Array to string
+concat()     -> Merge arrays
+
+================================================================================
+                    REQUIREMENT: FIND DUPLICATES IN AN ARRAY
+================================================================================
+
+PROBLEM STATEMENT:
+--------------------------------------------------------------------------------
+Write a function to find and return all duplicate elements from a given array.
+
+INPUT:
+--------------------------------------------------------------------------------
+[1, 2, 3, 2, 4, 5, 1]
+
+OUTPUT:
+--------------------------------------------------------------------------------
+[1, 2]
+
+CONSTRAINTS:
+--------------------------------------------------------------------------------
+• The output should contain only the elements that appear more than once
+• Each duplicate should be listed only once (no repetition in output)
+• Order of output does not matter
+
+
+FUNCTION SIGNATURE:
+--------------------------------------------------------------------------------
+function findDuplicates(arr: number[]): number[]
+
+
+================================================================================
+                              END OF REQUIREMENT
+================================================================================
+
+
+--------------------------------------------------------------------------------
+
+1. Stale Element Exception
+--------------------------------------------------------------------------------
+
+Q: Why does Playwright not suffer from the "Stale Element Exception" common in 
+   Selenium?
+
+A: 
+   • Playwright uses auto-waiting + actionability checks
+   • Before any action, it ensures:
+     - Element is attached to DOM
+     - Element is visible
+     - Element is stable (not moving/animating)
+     - Element is clickable (not covered)
+   • If DOM changes, Playwright automatically retries
+   • Hence, no stale element reference issues
+
+
+2. Handling Custom Dropdowns
+--------------------------------------------------------------------------------
+
+Q: How do you handle a dropdown that is not a standard <select> element?
+
+A: 
+   • Cannot use selectOption()
+   • Steps:
+     - Click dropdown to expand
+     - Wait for options to appear
+     - Click option using text/role-based locator
+
+   Example:
+   await page.click('#dropdown');
+   await page.getByRole('option', { name: 'Option Name' }).click();
+
+
+3. Dynamic Dropdown (Search-based)
+--------------------------------------------------------------------------------
+
+Q: Dropdown options load only after typing 3 characters. How do you automate this?
+
+A: 
+   • Simulate real typing
+   • Use pressSequentially() or type()
+
+   Example:
+   await page.locator('#search').pressSequentially('App', { delay: 100 });
+
+
+4. Test Fails in CI but Passes Locally
+--------------------------------------------------------------------------------
+
+Q: What is your first step to debug?
+
+A: 
+   • Enable Playwright Trace Viewer
+   • Captures:
+     - Screenshots
+     - Network logs
+     - DOM snapshots
+   • Helps replay test execution step-by-step
+
+   Command:
+   npx playwright test --trace on
+
+
+5. Infinite Scroll Dropdown
+--------------------------------------------------------------------------------
+
+Q: How do you select the 50th item in an infinite scroll dropdown?
+
+A: 
+   • Open dropdown
+   • Use loop:
+     - Check if item is visible
+     - Scroll if not
+   • Repeat until found
+
+   Example:
+   while (!(await page.getByText('Item 50').isVisible())) {
+     await page.keyboard.press('PageDown');
+   }
+   await page.getByText('Item 50').click();
+
+
+6. Function Declaration vs Expression
+--------------------------------------------------------------------------------
+
+Q: Difference between:
+   function login() {}
+   const login = function() {}
+
+A: 
+   • Function Declaration:
+     - Hoisted → can call before definition
+
+   • Function Expression:
+     - Not hoisted → ReferenceError if called before definition
+
+
+7. Reusable Locator Validation Function
+--------------------------------------------------------------------------------
+
+Q: Write a reusable function to check if element is visible and enabled.
+
+A: 
+   • Combine isVisible() + isEnabled()
+   • Return boolean
+
+   Example:
+   async function isReady(locator) {
+     return await locator.isVisible() && await locator.isEnabled();
+   }
+
+
+8. Multi-select Dropdown
+--------------------------------------------------------------------------------
+
+Q: How do you select multiple options in a standard <select> element?
+
+A: 
+   • Use selectOption() with array
+
+   Example:
+   await page.locator('#colors').selectOption(['Red', 'Green', 'Blue']);
+
+
+9. Handling Dropdown Closing After Selection
+--------------------------------------------------------------------------------
+
+Q: How do you handle a dropdown that closes after each selection?
+
+A: 
+   • Re-open dropdown inside loop for each iteration
+
+   Example:
+   const items = ['Apple', 'Orange', 'Banana'];
+   
+   for (const item of items) {
+     await page.click('#dropdown-trigger'); // reopen
+     await page.getByRole('option', { name: item }).click();
+   }
+
+
+================================================================================
+                              FINAL SUMMARY
+                        (Interview Quick Notes)
+================================================================================
+
+   • Playwright → Auto-wait → No stale element
+   • Custom dropdown → click + select
+   • Dynamic dropdown → typing simulation
+   • CI failures → Trace Viewer
+   • Infinite scroll → loop + scroll
+   • Hoisting → function vs expression
+   • Reusable functions → clean framework
+   • selectOption → multi-select
+   • Dropdown loops → re-open each time
+
+================================================================================
+                         END OF DOCUMENT
+================================================================================
