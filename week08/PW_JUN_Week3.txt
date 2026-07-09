@@ -1,0 +1,159 @@
+Topics covered in the session :
+
+Week3 Day1 :  Playwright Locators
+Week3 Day2 :  Playwright Assertions
+
+
+================================================================================
+     WEEK 3 – ADVANCED PLAYWRIGHT INTERVIEW Q&A (SENIOR SDET LEVEL)
+================================================================================
+
+
+DAY 1 – PLAYWRIGHT LOCATORS (REAL-TIME + ADVANCED)
+================================================================================
+
+1. Strict Mode Violation
+--------------------------------------------------------------------------------
+
+Q: Why does Playwright throw Strict Mode Violation and how do you fix it in real
+   projects?
+
+A: • Playwright expects ONE unique element per locator
+   • If multiple elements match → throws error
+
+   Real Problem:
+   page.locator('#button') // matches multiple elements
+
+   Fix Approach:
+   • Use role-based locator
+   • Add exact text match
+   • Handle dynamic elements like loaders
+
+   Example:
+   await expect(page.locator('.spinner')).toBeHidden();
+   await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+   Senior Insight: Locator should always represent user intention.
+
+
+2. Locator Stability in Dynamic UI
+--------------------------------------------------------------------------------
+
+Q: How do you design stable locators in React/Angular apps?
+
+A: • Avoid DOM-based XPath
+   • Use:
+     - getByRole()
+     - getByLabel()
+     - data-testid
+
+   Why?
+   • UI structure changes frequently
+   • Attributes remain stable
+
+
+3. Handling Multiple Matching Elements
+--------------------------------------------------------------------------------
+
+Q: Locator matches multiple elements. What will you do?
+
+A: • Validate count:
+   await locator.count();
+
+   • Fix:
+   locator.nth(0) OR refine locator with text/role
+
+
+4. Relative XPath in Tables
+--------------------------------------------------------------------------------
+
+Q: How do you handle dynamic tables?
+
+A: • Use text anchor → navigate relative
+
+   XPath: //tr[td[text()='John']]//button[@class='edit']
+
+   Why: IDs change, text remains stable
+
+
+5. Locator inside iframe
+--------------------------------------------------------------------------------
+
+Q: Element inside iframe is not found. Why?
+
+A: • Must switch context
+
+   Example:
+   page.frameLocator('#frame').getByText('Submit').click();
+
+
+5. Locator values inside Table
+--------------------------------------------------------------------------------
+
+Q: Element inside iframe is not found. Why?
+
+A: • Must switch context
+
+   Example:
+   page.frameLocator('#frame').getByText('Submit').click();
+
+
+================================================================================
+DAY 2 – ASSERTIONS & TYPESCRIPT FUNDAMENTALS
+================================================================================
+
+6. Web-First Assertion (Core Playwright Concept)
+--------------------------------------------------------------------------------
+
+Q: Why are Playwright assertions called "web-first"?
+
+A: • They auto-retry until condition passes or timeout
+   • Eliminates need for manual waits
+
+   Example:
+   await expect(locator).toBeVisible();
+
+   Senior Insight: Assertions = synchronization tool
+
+
+7. Hard vs Soft Assertion (Real Scenario)
+--------------------------------------------------------------------------------
+
+Q: When do you use soft assertions?
+
+A: • Non-critical validations:
+     - UI labels
+     - Footer links
+
+   Example:
+   await expect.soft(locator).toHaveText('Welcome');
+
+   Important:
+   • Test continues execution
+   • Failure reported at end
+
+
+8. Assertion Timeout Strategy
+--------------------------------------------------------------------------------
+
+Q: Modal disappears after 6 sec but default timeout is 5 sec. What will you do?
+
+A: • Override locally
+   await expect(locator).toBeHidden({ timeout: 6000 });
+
+   Avoid: Increasing global timeout
+
+
+9. Static vs Retry Assertion
+--------------------------------------------------------------------------------
+
+Q: Difference between:
+   expect(value)
+   await expect(page).toHaveURL()
+
+A: • expect(value) → no retry
+   • toHaveURL() → retries
+
+   Best Practice: Always use retry assertions for UI
+
+
