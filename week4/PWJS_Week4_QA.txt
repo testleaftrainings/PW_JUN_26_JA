@@ -1,0 +1,450 @@
+================================================================================
+     WEEK 4 – ADVANCED PLAYWRIGHT INTERVIEW Q&A (SENIOR SDET LEVEL)
+================================================================================
+
+
+DAY 1 – FRAMES
+================================================================================
+
+1. Nested Frames with Dynamic IDs
+--------------------------------------------------------------------------------
+
+Q: You're testing a legacy application that has three levels of nested iframes. 
+The innermost iframe contains the elements you need to interact with, but its 
+id attribute changes on every page reload (e.g., frame_4829, frame_9301, etc.). 
+The outer iframe IDs are static. How would you locate and work with that dynamic 
+inner iframe in Playwright? Please explain your approach and write the code to 
+click a button inside that dynamic iframe.?
+
+A: • Never rely on dynamic IDs
+   • Use stable attributes + frameLocator()
+   • Playwright auto-waits for frames
+
+   Example:
+   const outer = page.frameLocator('iframe[id="transaction-container"]');
+   const inner = outer.frameLocator('iframe');
+   await inner.getByRole('button', { name: 'Submit Transaction' }).click();
+
+   Senior Insight: Playwright eliminates need for manual frame switching unlike
+   Selenium.
+
+
+2. Frame Load Timing Issue
+--------------------------------------------------------------------------------
+
+Q: In one of your test suites, you're interacting with an <iframe> (frame) that 
+sometimes takes 5–10 seconds to load its content. Your test frequently fails 
+because Playwright tries to interact with elements inside the frame before it's
+fully loaded. How would you handle this situation in Playwright to make the test 
+reliable without using arbitrary wait(5000) delays? 
+
+A: • frameLocator() automatically waits
+   • Avoid explicit waits like waitForTimeout()
+
+   If needed:
+   await expect(inner.getByRole('button')).toBeVisible();
+
+   ✅ Approach 1: Use frameLocator() - Best Practice
+   const frame = page.frameLocator('iframe[data-test="payment-frame"]');
+   await frame.getByRole('button', { name: 'Pay Now' }).click();
+
+   ✅ Approach 2: Explicit Assertion Before Action
+   const button = frame.getByRole('button', { name: 'Pay Now' });
+   await expect(button).toBeVisible();
+   await button.click();
+
+   ✅ Approach 3: Wait for Frame to be Attached
+   await expect(page.locator('iframe[data-test="payment-frame"]')).toBeAttached();
+
+   ✅ Approach 4: Wait for Specific Content Inside Frame
+   await expect(frame.getByText('Transaction Successful')).toBeVisible();
+
+   ❌ What NOT to do:
+   await page.waitForTimeout(5000); // Bad practice - flaky and slow
+
+
+
+3. Multiple Frames on Page
+--------------------------------------------------------------------------------
+
+Q: You're testing a dashboard that contains 6–8 iframes on the same page. Each iframe
+loads different widgets (charts, forms, tables). None of them have stable IDs — some 
+have dynamic names, others have no name or id attributes at all. You need to click a 
+'Refresh' button inside the third widget's iframe. How would you identify and target 
+the correct frame in Playwright? Show me at least two different reliable approaches
+
+A: • Use name, title, or data-* attributes
+
+   ✅ Approach 1: Index-Based Targeting (When order is stable)
+   const thirdFrame = page.frameLocator('iframe').nth(2);
+   await thirdFrame.getByRole('button', { name: 'Refresh' }).click();
+
+   ✅ Approach 2: Content-Based Frame Identification (Best Practice)
+   const count = await page.locator('iframe').count();
+   for (let i = 0; i < count; i++) {
+     const frame = page.frameLocator('iframe').nth(i);
+     if (await frame.getByText('Sales Chart').isVisible()) {
+       await frame.getByRole('button', { name: 'Refresh' }).click();
+       break;
+     }
+   }
+
+   ✅ Approach 3: Using Parent Container (Highly Recommended)
+   const widget = page.locator('.widget-container', { hasText: 'Sales' });
+   const frame = widget.frameLocator('iframe');
+   await frame.getByRole('button', { name: 'Refresh' }).click();
+
+
+
+================================================================================
+DAY 2 – WINDOW HANDLING
+================================================================================
+
+4. Handling New Tab / Window
+--------------------------------------------------------------------------------
+
+Q:You're automating a flow where clicking a 'Print Preview' button opens a new browser 
+tab. You need to verify that the new tab contains a specific text ('Invoice #1234') and 
+then close that tab to return to the original tab for the next step. How would you handle 
+this in Playwright? Please write the code and mention any edge cases or common pitfalls.
+
+A: const [newPage] = await Promise.all([
+     context.waitForEvent('page'),
+     page.click('#open')
+   ]);
+   await newPage.waitForLoadState();
+
+   Full Example:
+   const [newPage] = await Promise.all([
+     context.waitForEvent('page'),
+     page.getByRole('button', { name: 'Print Preview' }).click()
+   ]);
+
+   await newPage.waitForLoadState();
+   await expect(newPage.getByText('Invoice #1234')).toBeVisible();
+   await newPage.close();
+   await expect(page).toHaveTitle(/Dashboard/);
+
+   ⚠️ Common Pitfalls:
+   • Not using Promise.all() → may miss event
+   • Not waiting for page load → flaky assertions
+   • Using wrong context → use context.waitForEvent('page')
+   • Not closing tab → memory leaks
+
+
+5. Multiple Windows Handling
+--------------------------------------------------------------------------------
+
+Q: You're testing a multi-step workflow that spans three different pages (not tabs — 
+actual browser windows/pages). Step 1: Login on page A. Step 2: Click a link that opens 
+page B in a new window. Step 3: On page B, click a button that opens page C. Then you need 
+to go back to page A to verify a toast notification appeared. How would you manage navigation 
+between these three pages in Playwright? Show code for switching, verifying, and closing pages. 
+Also explain how this differs from handling multiple tabs.
+
+A: • Use browser context and keep page references
+
+   Example:
+   const pages = context.pages();
+   await pages[1].bringToFront();
+
+   Full Solution:
+   // Page A - Login
+   await page.goto('https://app.example.com/login');
+   await page.fill('#username', 'user');
+   await page.fill('#password', 'pass');
+   await page.click('#login');
+
+   // Open Page B
+   const [pageB] = await Promise.all([
+     context.waitForEvent('page'),
+     page.getByRole('link', { name: 'Open Details' }).click()
+   ]);
+   await pageB.waitForLoadState();
+
+   // Open Page C from Page B
+   const [pageC] = await Promise.all([
+     context.waitForEvent('page'),
+     pageB.getByRole('button', { name: 'Open Report' }).click()
+   ]);
+   await pageC.waitForLoadState();
+
+   // Close Page C and return to B
+   await pageC.close();
+   await pageB.bringToFront();
+
+   // Close Page B and return to A
+   await pageB.close();
+   await page.bringToFront();
+
+   // Verify toast on Page A
+   await expect(page.locator('.toast-message')).toBeVisible();
+
+
+
+6. Popup Block Issue
+--------------------------------------------------------------------------------
+
+Q: Popup not captured. Why?
+
+A: • Listener not attached before action
+
+ Fix:
+   const [popup] = await Promise.all([
+     context.waitForEvent('page'),
+     page.click('#open-popup')
+   ]);
+
+
+
+
+================================================================================
+DAY 3 – FILE UPLOAD & DOWNLOAD
+================================================================================
+
+7. Hidden File Upload
+--------------------------------------------------------------------------------
+
+Q: You're testing a file upload feature where the <input type="file"> element is hidden 
+from the UI. The developers used a custom button that triggers the file dialog, but the 
+actual file input has display: none or visibility: hidden. You cannot interact with the 
+visible button using standard Playwright methods because it's a complex React component. 
+How would you upload a file in this scenario? Show at least two different approaches, and 
+explain which one is more reliable and why.
+
+A: • Playwright bypasses UI restrictions
+
+   Option 1 - Direct setInputFiles (Most Reliable):
+   await page.locator('input[type="file"]').setInputFiles('file.pdf');
+
+   Option 2 - File Chooser Event:
+   const chooser = await page.waitForEvent('filechooser');
+   await page.click('#upload');
+   await chooser.setFiles('file.pdf');
+
+   ✅ Approach 1 is more reliable because:
+   • No dependency on UI behavior or event timing
+   • Works even if button is flaky
+   • Faster (no dialog handling)
+
+   💡 Interview One-liner:
+   "I prefer setting files directly on the hidden input using setInputFiles()
+    for stability, and use the filechooser event only when I need to simulate
+    the real user flow through the UI trigger."
+
+
+
+8. Verify File Download
+--------------------------------------------------------------------------------
+
+Q: You're testing a 'Generate Report' feature. When the user clicks the 'Export CSV' button, 
+the browser triggers a file download — but there's no visual confirmation on the page (no toast, 
+no success message). The file could be a CSV, PDF, or Excel file. How would you verify that the 
+download was successful, that the file has content, and that the content matches expected data? 
+Write the code and explain how you'd handle large files or slow downloads.
+
+A: • Capture download event
+   • Save file
+   • Validate existence + size + content
+
+   Example:
+   import fs from 'fs';
+   import path from 'path';
+
+   const [download] = await Promise.all([
+     page.waitForEvent('download'),
+     page.click('#download')
+   ]);
+
+   const filePath = path.resolve(`./downloads/${download.suggestedFilename()}`);
+   await download.saveAs(filePath);
+
+   // Verify file exists
+   expect(fs.existsSync(filePath)).toBe(true);
+
+   // Verify file not empty
+   const stats = fs.statSync(filePath);
+   expect(stats.size).toBeGreaterThan(0);
+
+   // Verify content (CSV example)
+   const content = fs.readFileSync(filePath, 'utf-8');
+   expect(content).toContain('Invoice ID');
+   expect(content).toContain('1234');
+
+   Handling Different File Types:
+   • CSV/TXT → readFileSync + string validation
+   • PDF → check extension + basic validation
+   • Excel → use xlsx library to parse
+
+   Handling Large Files:
+   • Increase timeout: page.waitForEvent('download', { timeout: 15000 })
+   • Use streaming instead of loading full file
+
+
+
+9. Validate File Size
+--------------------------------------------------------------------------------
+
+Q: How do you ensure file is not empty?
+
+A: const stats = fs.statSync('./file.pdf');
+   expect(stats.size).toBeGreaterThan(0);
+
+
+10. Retry Logic for Downloads
+--------------------------------------------------------------------------------
+
+Q: You're running tests in a CI/CD pipeline against a staging environment that has 
+occasional network instability. One of your critical tests downloads a monthly sales 
+report, but the download fails about 10-15% of the time due to timeouts, incomplete 
+responses, or server-side 5xx errors. The team expects zero flaky tests. How would you 
+implement a retry mechanism specifically for download failures in Playwright? Please show 
+code that handles different failure scenarios (timeout, corrupt file, empty file) and 
+distinguishes between transient and permanent failures.
+
+A: • Implement controlled retry
+   • Avoid infinite retry
+   • Validate file integrity
+
+   Example:
+   async function downloadWithRetry(page, retries = 3) {
+     for (let i = 0; i < retries; i++) {
+       try {
+         const [download] = await Promise.all([
+           page.waitForEvent('download', { timeout: 15000 }),
+           page.click('#export')
+         ]);
+
+         const filePath = path.resolve(`./downloads/${download.suggestedFilename()}`);
+         await download.saveAs(filePath);
+
+         const stats = fs.statSync(filePath);
+         if (stats.size === 0) throw new Error('Empty file');
+
+         return filePath; // success
+
+       } catch (err) {
+         if (i === retries - 1) throw err;
+         console.log(`Retry ${i + 1} due to: ${err.message}`);
+         await page.waitForTimeout(1000);
+       }
+     }
+   }
+
+   Senior Insight: Retry should not hide real failures
+
+
+11. Validate File Type Before Upload
+--------------------------------------------------------------------------------
+
+Q: How do you validate file type?
+
+A: import path from 'path';
+   expect(path.extname(filePath)).toBe('.pdf');
+
+
+12. Validate File Before Upload (Real Scenario)
+--------------------------------------------------------------------------------
+
+Q: How do you ensure correct file is uploaded?
+
+A: • Check:
+     - File type
+     - File size
+     - File name
+
+
+================================================================================
+DAY 4 – STORAGESTATE & TEST ANNOTATION
+================================================================================
+
+13. storageState – Real Use Case
+--------------------------------------------------------------------------------
+
+Q: Why do we use storageState?
+
+A: • Skip login
+   • Reuse session
+   • Improve execution speed
+
+
+14. Parallel Execution with storageState
+--------------------------------------------------------------------------------
+
+Q: Admin & User tests run in parallel. How to avoid conflict?
+
+A: • Use separate storage files
+
+   Example:
+   browser.newContext({ storageState: 'admin.json' });
+   browser.newContext({ storageState: 'user.json' });
+
+   Avoid: Sharing same storage file
+
+
+15. Test Annotation (skip, only, fixme)
+--------------------------------------------------------------------------------
+
+Q: What are test annotations?
+
+A: • Control test execution
+
+   Examples:
+   test.skip()
+   test.only()
+   test.fixme()
+
+
+16. Real-Time Annotation Usage
+--------------------------------------------------------------------------------
+
+Q: When do you use test.fixme()?
+
+A: • Known issue
+   • Feature not ready
+   • Avoid false failures
+
+
+17. Conditional Test Execution
+--------------------------------------------------------------------------------
+
+Q: Run test only in specific environment
+
+A: test.skip(process.env.ENV !== 'QA', 'Run only in QA');
+
+
+================================================================================
+                    REAL-TIME SCENARIO QUESTION
+================================================================================
+
+18. End-to-End Scenario (Frame + Download + Storage)
+--------------------------------------------------------------------------------
+
+Q: Test fails in flow:
+   Login → Navigate iframe → Download file
+
+   What will you check?
+
+A: • storageState validity
+   • Frame locator correctness
+   • Download event timing
+
+================================================================================
+                    INTERVIEW QUICK SUMMARY
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Topic              │ Key Takeaway                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Frames             │ Use frameLocator() - auto-waits, no manual switching   │
+│ Windows/Tabs       │ Promise.all() + context.waitForEvent('page')           │
+│ File Upload        │ setInputFiles() directly on hidden input (most stable) │
+│ File Download      │ waitForEvent('download') + saveAs() + validate         │
+│ Retry Logic        │ Limited retries (3 max), validate after each attempt   │
+│ storageState       │ Separate files for different roles in parallel         │
+│ Annotations        │ skip() / only() / fixme() for conditional execution    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                         END OF DOCUMENT
+================================================================================
